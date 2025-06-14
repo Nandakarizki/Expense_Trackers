@@ -4,9 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:apps/data/data.dart';
+import 'package:intl/intl.dart';
 
 class MainScreen extends StatelessWidget {
-
   final User user;
 
   final List<Expense> expenses;
@@ -20,7 +20,9 @@ class MainScreen extends StatelessWidget {
         return AlertDialog(
           title: const Text('Konfirmasi Keluar'),
           content: const Text('Apakah Anda yakin ingin keluar dari akun Anda?'),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text('Batal'),
@@ -29,10 +31,7 @@ class MainScreen extends StatelessWidget {
               },
             ),
             TextButton(
-              child: const Text(
-                'Keluar',
-                style: TextStyle(color: Colors.red),
-              ),
+              child: const Text('Keluar', style: TextStyle(color: Colors.red)),
               onPressed: () {
                 Navigator.of(context).pop(true);
               },
@@ -49,6 +48,20 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double totalIncome = expenses
+        .where((e) => e.amount > 0)
+        .fold(0, (sum, item) => sum + item.amount);
+    final double totalExpense = expenses
+        .where((e) => e.amount < 0)
+        .fold(0, (sum, item) => sum + item.amount.abs());
+    final double totalBalance = totalIncome - totalExpense;
+
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp. ',
+      decimalDigits: 0,
+    );
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
@@ -66,7 +79,10 @@ class MainScreen extends StatelessWidget {
                           : null,
                       backgroundColor: Colors.yellow[700],
                       child: user.photoURL == null
-                          ? const Icon(CupertinoIcons.person_fill, color: Colors.white)
+                          ? const Icon(
+                              CupertinoIcons.person_fill,
+                              color: Colors.white,
+                            )
                           : null,
                     ),
                     const SizedBox(width: 8),
@@ -99,7 +115,7 @@ class MainScreen extends StatelessWidget {
                   },
                   icon: const Icon(CupertinoIcons.square_arrow_right),
                   tooltip: 'Keluar',
-                )
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -137,7 +153,7 @@ class MainScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    "Rp. 175.000,00-",
+                    currencyFormatter.format(totalBalance),
                     style: TextStyle(
                       fontSize: 30,
                       color: Colors.white,
@@ -171,7 +187,7 @@ class MainScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Column(
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
@@ -183,7 +199,7 @@ class MainScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  "Rp. 200.000,00-",
+                                  currencyFormatter.format(totalIncome),
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.white,
@@ -212,7 +228,7 @@ class MainScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Column(
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
@@ -224,7 +240,7 @@ class MainScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  "Rp. 25.000,00-",
+                                  currencyFormatter.format(totalExpense),
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.white,
@@ -269,8 +285,11 @@ class MainScreen extends StatelessWidget {
             const SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
-                itemCount: transactionsMock.length,
+                itemCount: expenses.length,
                 itemBuilder: (context, int i) {
+                  final expense = expenses[i];
+                  final isIncome = expense.amount > 0;
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Container(
@@ -299,24 +318,37 @@ class MainScreen extends StatelessWidget {
                                             width: 50,
                                             height: 50,
                                             decoration: BoxDecoration(
-                                              color:
-                                                  transactionsMock[i]["color"],
+                                              color: Color(expense.category.color),
                                               shape: BoxShape.circle,
                                             ),
                                           ),
-                                          transactionsMock[i]["icon"]
+                                          Image.asset(
+                                            'assets/${expense.category.icon}.png',
+                                            width: 32,
+                                            height: 32,
+                                          )
                                         ],
                                       ),
                                       const SizedBox(width: 12),
-                                      Text(
-                                        transactionsMock[i]["name"],
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            expense.category.name,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Theme.of(context).colorScheme.onSurface,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          Text(
+                                            expense.description,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Theme.of(context).colorScheme.outline,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -327,22 +359,18 @@ class MainScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  transactionsMock[i]["totalAmount"],
+                                  currencyFormatter.format(expense.amount),
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                    fontWeight: FontWeight.w400,
+                                    color: isIncome ? Colors.green : Colors.red,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
-                                  transactionsMock[i]["date"],
+                                  DateFormat('dd MMM yyyy').format(expense.date),
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.outline,
+                                    color: Theme.of(context).colorScheme.outline,
                                     fontWeight: FontWeight.w400,
                                   ),
                                 ),

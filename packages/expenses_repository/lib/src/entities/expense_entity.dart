@@ -8,12 +8,14 @@ class ExpenseEntity {
   Category category;
   DateTime date;
   int amount;
+  String description;
 
   ExpenseEntity({
     required this.expenseId,
     required this.category,
     required this.date,
     required this.amount,
+    required this.description,
   });
 
   Map<String, Object?> toDocument() {
@@ -22,6 +24,7 @@ class ExpenseEntity {
       'category': category.toEntity().toDocument(),
       'date': date,
       'amount': amount,
+      'description': description,
     };
   }
 
@@ -32,6 +35,7 @@ class ExpenseEntity {
           Category.fromEntity(CategoryEntity.fromDocument(doc['category'])),
       date: (doc['date'] as Timestamp).toDate(),
       amount: doc['amount'],
+      description: doc['description'] ?? '',
     );
   }
 }

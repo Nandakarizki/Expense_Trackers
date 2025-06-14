@@ -1,4 +1,5 @@
 import 'package:apps/services/auth_service.dart';
+import 'package:expense_repository/expense_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,9 @@ class MainScreen extends StatelessWidget {
 
   final User user;
 
-  const MainScreen({super.key, required this.user});
+  final List<Expense> expenses;
+
+  const MainScreen(this.expenses, {super.key, required this.user});
 
   Future<void> _showLogoutConfirmationDialog(BuildContext context) async {
     final bool? shouldLogout = await showDialog<bool>(

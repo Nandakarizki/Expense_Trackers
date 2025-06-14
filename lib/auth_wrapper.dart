@@ -1,8 +1,11 @@
 import 'package:apps/screens/auth/login_screen.dart';
+import 'package:apps/screens/home/blocs/get_expenses_bloc/get_expenses_bloc.dart';
 import 'package:apps/screens/home/views/home_screen.dart';
 import 'package:apps/services/auth_service.dart';
+import 'package:expense_repository/expense_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -54,7 +57,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
             });
           }
 
-          return HomeScreen(user: currentUser);
+          // ✅ Wrap HomeScreen with BlocProvider
+          return BlocProvider<GetExpensesBloc>(
+            create: (context) => GetExpensesBloc(FirebaseExpenseRepo())..add(GetExpenses()),
+            child: HomeScreen(user: currentUser),
+          );
         } else {
           // User logged out, reset state
           _previousUser = null;
